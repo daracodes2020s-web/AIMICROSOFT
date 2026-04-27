@@ -1,0 +1,994 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MachineryAI 1.0</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --purple: #8B2FC9;
+      --purple-dark: #5a1a8a;
+      --purple-light: #b44fe0;
+      --green: #00e676;
+      --green-dim: rgba(0,230,118,0.12);
+      --card-bg: rgba(255,255,255,0.07);
+      --border: rgba(255,255,255,0.12);
+      --text: #f0e6ff;
+      --muted: rgba(240,230,255,0.5);
+    }
+
+    body {
+      font-family: 'Segoe UI', Arial, sans-serif;
+      background: linear-gradient(135deg, #1a0030 0%, #2d0060 50%, #1a0030 100%);
+      min-height: 100vh;
+      color: var(--text);
+      padding: 0;
+    }
+
+    /* ── Header ── */
+    header {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 22px 32px;
+      background: rgba(0,0,0,0.3);
+      border-bottom: 1px solid var(--border);
+      backdrop-filter: blur(10px);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    .logo {
+      width: 38px; height: 38px;
+      background: linear-gradient(135deg, var(--purple-light), var(--green));
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 20px;
+    }
+
+    header h1 {
+      font-size: 22px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+    }
+
+    header h1 span { color: var(--green); }
+
+    .badge {
+      background: var(--green);
+      color: #000;
+      font-size: 10px;
+      font-weight: 800;
+      padding: 2px 7px;
+      border-radius: 20px;
+      letter-spacing: 0.5px;
+      margin-left: 4px;
+    }
+
+    .header-right {
+      margin-left: auto;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    /* ── Main layout ── */
+    main {
+      max-width: 780px;
+      margin: 40px auto;
+      padding: 0 20px 60px;
+    }
+
+    .tagline {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+
+    .tagline h2 {
+      font-size: 28px;
+      font-weight: 700;
+      margin-bottom: 8px;
+      background: linear-gradient(90deg, #fff, var(--green));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .tagline p {
+      color: var(--muted);
+      font-size: 15px;
+    }
+
+    /* ── Input card ── */
+    .input-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 24px;
+      backdrop-filter: blur(8px);
+      margin-bottom: 20px;
+    }
+
+    .input-row {
+      display: flex;
+      gap: 10px;
+      align-items: stretch;
+    }
+
+    #sentenceInput {
+      flex: 1;
+      padding: 14px 16px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,0.06);
+      color: #fff;
+      font-size: 15px;
+      outline: none;
+      transition: border 0.2s;
+    }
+
+    #sentenceInput::placeholder { color: var(--muted); }
+    #sentenceInput:focus { border-color: var(--purple-light); }
+
+    .controls {
+      display: flex;
+      gap: 10px;
+      margin-top: 14px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .select-group {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    select {
+      padding: 7px 10px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,0.08);
+      color: #fff;
+      font-size: 13px;
+      outline: none;
+      cursor: pointer;
+    }
+
+    select option { background: #2d0060; }
+
+    #runBtn {
+      margin-left: auto;
+      padding: 10px 24px;
+      border-radius: 10px;
+      border: none;
+      background: linear-gradient(135deg, var(--purple-light), var(--green));
+      color: #000;
+      font-weight: 800;
+      font-size: 14px;
+      cursor: pointer;
+      transition: opacity 0.2s, transform 0.1s;
+      letter-spacing: 0.3px;
+    }
+
+    #runBtn:hover:not(:disabled) { opacity: 0.9; transform: translateY(-1px); }
+    #runBtn:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
+
+    .status-bar {
+      margin-top: 12px;
+      font-size: 12px;
+      color: var(--muted);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .dot {
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: var(--muted);
+      display: inline-block;
+    }
+
+    .dot.ready { background: var(--green); box-shadow: 0 0 6px var(--green); }
+
+    /* ── Result cards ── */
+    .results { display: flex; flex-direction: column; gap: 16px; margin-bottom: 20px; }
+
+    .result-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 20px 22px;
+      backdrop-filter: blur(8px);
+      display: none;
+      animation: fadeIn 0.3s ease;
+    }
+
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+    .result-card.visible { display: block; }
+
+    .result-card .brain-label {
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 1.2px;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .result-card .brain-label .icon { font-size: 14px; }
+
+    .result-card .phrase {
+      font-size: 19px;
+      font-weight: 600;
+      line-height: 1.5;
+      color: #fff;
+    }
+
+    .result-card .phrase .input-part { color: var(--muted); font-weight: 400; }
+    .result-card .phrase .gen-part   { color: var(--green); font-weight: 700; }
+
+    .result-card .meta {
+      margin-top: 10px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    /* ── Log ── */
+    .log-toggle {
+      font-size: 12px;
+      color: var(--muted);
+      cursor: pointer;
+      text-align: center;
+      margin-bottom: 8px;
+      user-select: none;
+      transition: color 0.2s;
+    }
+
+    .log-toggle:hover { color: #fff; }
+
+    pre#logEl {
+      background: rgba(0,0,0,0.4);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px 16px;
+      font-size: 12px;
+      line-height: 1.6;
+      color: rgba(255,255,255,0.6);
+      white-space: pre-wrap;
+      word-wrap: break-word;
+      max-height: 220px;
+      overflow-y: auto;
+      display: none;
+    }
+
+    pre#logEl.visible { display: block; }
+
+    /* ── Footer ── */
+    footer {
+      text-align: center;
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 40px;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="logo">🤖</div>
+  <h1>Machinery<span>AI</span> <span class="badge">1.0</span></h1>
+  <div class="header-right">by MachineryTek</div>
+</header>
+
+<main>
+  <div class="tagline">
+    <h2>Two brains. One answer.</h2>
+    <p>A tiny offline neural net + live internet sentence completion, working side by side.</p>
+  </div>
+
+  <div class="input-card">
+    <div class="input-row">
+      <input id="sentenceInput" placeholder="Type a phrase to continue… e.g. the ocean is, machine learning" />
+    </div>
+    <div class="controls">
+      <div class="select-group">
+        <span>Generate</span>
+        <select id="genCount">
+          <option value="3">3 words</option>
+          <option value="4">4 words</option>
+          <option value="5" selected>5 words</option>
+          <option value="6">6 words</option>
+          <option value="8">8 words</option>
+          <option value="10">10 words</option>
+        </select>
+      </div>
+      <div class="select-group">
+        <span>Creativity</span>
+        <select id="tempSelect">
+          <option value="0.4">Low</option>
+          <option value="0.65" selected>Medium</option>
+          <option value="0.9">High</option>
+          <option value="1.2">Wild</option>
+        </select>
+      </div>
+      <button id="runBtn" disabled>Training…</button>
+    </div>
+    <div class="status-bar">
+      <span class="dot" id="statusDot"></span>
+      <span id="statusText">Initialising…</span>
+    </div>
+  </div>
+
+  <div class="results">
+    <div class="result-card" id="offlineCard">
+      <div class="brain-label"><span class="icon">🧠</span> Offline Brain — MachineryAI Neural Net</div>
+      <div class="phrase" id="offlinePhrase"></div>
+      <div class="meta" id="offlineMeta"></div>
+    </div>
+    <div class="result-card" id="onlineCard">
+      <div class="brain-label"><span class="icon">🌐</span> Online Brain — Live Internet Completion</div>
+      <div class="phrase" id="onlinePhrase"></div>
+      <div class="meta" id="onlineMeta"></div>
+    </div>
+  </div>
+
+  <div class="log-toggle" id="logToggle">▼ Show debug log</div>
+  <pre id="logEl"></pre>
+
+  <footer>MachineryAI 1.0 &nbsp;·&nbsp; MachineryTek &nbsp;·&nbsp; Built with a tiny MLP + Datamuse API</footer>
+</main>
+
+<script>
+(() => {
+  "use strict";
+
+  // ── DOM ────────────────────────────────────────────────────────────────────
+  const logEl        = document.getElementById("logEl");
+  const statusDot    = document.getElementById("statusDot");
+  const statusText   = document.getElementById("statusText");
+  const offlineCard  = document.getElementById("offlineCard");
+  const onlineCard   = document.getElementById("onlineCard");
+  const offlinePhEl  = document.getElementById("offlinePhrase");
+  const onlinePhEl   = document.getElementById("onlinePhrase");
+  const offlineMetaEl= document.getElementById("offlineMeta");
+  const onlineMetaEl = document.getElementById("onlineMeta");
+  const runBtn       = document.getElementById("runBtn");
+  const sentInput    = document.getElementById("sentenceInput");
+  const genCount     = document.getElementById("genCount");
+  const tempSelect   = document.getElementById("tempSelect");
+  const logToggle    = document.getElementById("logToggle");
+
+  function log(...args) {
+    const line = args.join(" ");
+    console.log(line);
+    logEl.textContent += line + "\n";
+    logEl.scrollTop = logEl.scrollHeight;
+  }
+
+  logToggle.addEventListener("click", () => {
+    logEl.classList.toggle("visible");
+    logToggle.textContent = logEl.classList.contains("visible") ? "▲ Hide debug log" : "▼ Show debug log";
+  });
+
+  // ── Hyper-params ───────────────────────────────────────────────────────────
+  const EMBED_DIM = 16;
+  const HIDDEN    = 96;
+  const LR        = 0.025;
+  const EPOCHS    = 700;
+  const WINDOW    = 4;
+
+  // ── Vocabulary ─────────────────────────────────────────────────────────────
+  const SEED_WORDS = [
+    // Function words — make sentences flow
+    "the","a","an","is","are","was","were","be","been","being",
+    "have","has","had","do","does","did","will","would","could","should",
+    "may","might","must","can","to","of","in","on","at","by",
+    "for","with","about","from","into","through","during","before","after","above",
+    "and","but","or","so","because","if","when","while","although","though",
+    "that","this","these","those","which","who","what","how","where","why",
+    "not","no","yes","very","just","also","more","most","some","any","even",
+    "he","she","it","we","you","i","they","me","him","her","us","them",
+    "my","your","his","its","our","their","mine","yours",
+    "then","than","too","only","such","well","still","here","there","now",
+    // Common verbs
+    "run","walk","think","feel","see","hear","know","want","need","like",
+    "make","get","give","take","come","go","say","tell","ask","help",
+    "find","keep","use","try","turn","move","change","create","build","design",
+    "understand","discover","explore","learn","grow","connect","share","decide","solve","improve",
+    "start","stop","show","happen","become","seem","appear","play","work","live",
+    "mean","call","hold","follow","believe","remain","allow","lead","bring","begin",
+    // Common adjectives
+    "new","old","good","bad","great","small","large","big","high","low",
+    "fast","slow","strong","weak","hot","cold","dark","bright","deep","clear",
+    "important","real","true","false","possible","simple","complex","open","full","empty",
+    "happy","sad","angry","calm","excited","tired","curious","creative","smart","powerful",
+    "beautiful","amazing","different","same","similar","natural","human","social","global","local",
+    "long","short","young","early","late","hard","easy","free","able","ready",
+    // Common nouns
+    "time","year","people","way","day","man","woman","child","world","life",
+    "hand","part","place","case","week","company","system","program","question","work",
+    "government","number","night","point","home","water","room","mother","area","money",
+    "story","fact","month","lot","right","study","book","eye","job","word",
+    "business","issue","side","kind","head","house","service","friend","father","power",
+    "hour","game","line","end","city","community","name","president","team","minute",
+    "idea","body","information","back","parent","face","others","level","office","door",
+    "health","person","art","war","history","party","result","change","morning","reason",
+    "research","girl","guy","moment","air","teacher","force","education","principal","society",
+    // AI / ML
+    "machine","learning","model","train","data","predict","classify","analyze","neural","network",
+    "deep","layer","neuron","weight","bias","activate","embed","vector","feature","token",
+    "transformer","attention","encoder","decoder","sequence","context","memory","language","generate","output",
+    "loss","accuracy","score","epoch","batch","normalize","scale","gradient","optimizer","dropout",
+    "overfit","converge","softmax","sigmoid","relu","cluster","regression","dimension","visualize","pipeline",
+    "inference","prompt","completion","sampling","temperature","autoregressive","latent","space","distribution",
+    "discriminator","generator","adversarial","reward","policy","agent","environment","reinforcement","architecture",
+    "convolution","pooling","dense","sparse","position","encoding","vocabulary","corpus","tokenize","representation",
+    "classification","detection","recognition","translation","summarization","extraction","retrieval","ranking",
+    "intelligence","artificial","algorithm","pattern","computation","processing","prediction","dataset","parameter",
+    // Software
+    "code","debug","test","deploy","update","system","run","process","compute","function",
+    "logic","state","event","server","client","cloud","browser","api","route","request",
+    "response","connect","session","parse","store","load","save","open","close","engine",
+    "message","chat","reply","index","search","query","string","object","array","matrix",
+    "graph","node","edge","tree","stack","heap","hash","map","set","list",
+    "class","interface","module","package","library","framework","runtime","compiler","thread",
+    "async","await","promise","callback","socket","http","database","sql","cache",
+    "docker","container","kubernetes","service","monitor","alert","metric","build","release","version",
+    "git","branch","commit","merge","pull","push","clone","repository","pipeline",
+    // Science
+    "science","physics","chemistry","biology","math","energy","force","mass","velocity","wave",
+    "quantum","entropy","relativity","evolution","cell","protein","dna","gene","ecosystem","species",
+    "probability","statistics","mean","variance","deviation","hypothesis","confidence","calculus","derivative","integral",
+    "experiment","theory","discovery","observation","measurement","equation","formula","proof","logic","reasoning",
+    // Nature
+    "ocean","river","mountain","forest","desert","island","valley","lake","sea","sky",
+    "sun","moon","star","cloud","rain","wind","fire","earth","water","light",
+    "tree","flower","grass","sand","rock","snow","storm","wave","beach","nature",
+    // World / Society
+    "city","town","road","bridge","building","park","farm","field","garden","coast",
+    "country","culture","history","future","society","community","technology","economy","market","trade",
+    "music","art","film","sport","food","travel","fashion","design","media","news",
+    // Animals
+    "lion","tiger","bear","wolf","fox","elephant","dolphin","eagle","shark","whale",
+    "cat","dog","bird","fish","horse","rabbit","snake","turtle","frog","bee",
+    // Colors
+    "red","blue","green","yellow","orange","purple","pink","black","white","grey","golden","silver",
+    // Extra descriptors / connectors
+    "called","known","named","used","made","said","seen","found","given","taken",
+    "able","available","possible","likely","unlikely","certain","specific","general","particular","various",
+    "following","including","according","based","related","compared","between","within","without","across",
+    "already","always","never","often","sometimes","usually","quickly","slowly","carefully","finally",
+    "however","therefore","although","meanwhile","otherwise","instead","together","separately","recently","currently",
+    "patterns","results","process","model","method","approach","solution","problem","challenge","opportunity",
+    "impact","effect","cause","reason","goal","plan","idea","concept","theory","example",
+    "tool","system","platform","product","service","network","team","project","strategy","mission",
+  ];
+
+  const wordIndex  = {};
+  const vocab      = [];
+  const embeddings = [];
+
+  function rand(lo, hi) { return Math.random() * (hi - lo) + lo; }
+  function randArr(n, lo = -0.5, hi = 0.5) { return Array.from({length:n}, () => rand(lo,hi)); }
+
+  function addWord(w) {
+    w = (w||"").trim().toLowerCase();
+    if (!w || wordIndex[w] !== undefined) return w;
+    wordIndex[w] = vocab.length;
+    vocab.push(w);
+    embeddings.push(randArr(EMBED_DIM));
+    return w;
+  }
+
+  SEED_WORDS.forEach(addWord);
+  const V = () => vocab.length;
+
+  // ── Weights ────────────────────────────────────────────────────────────────
+  const W1 = Array.from({length:HIDDEN}, () => randArr(EMBED_DIM));
+  const b1 = randArr(HIDDEN, 0, 0);
+  let   W2 = Array.from({length:V()}, () => randArr(HIDDEN));
+  let   b2 = randArr(V(), 0, 0);
+
+  function ensureOutputSize() {
+    while (W2.length < V()) { W2.push(randArr(HIDDEN)); b2.push(0); }
+  }
+
+  // ── Math ───────────────────────────────────────────────────────────────────
+  const relu  = x => Math.max(0, x);
+  const reluD = x => x > 0 ? 1 : 0;
+  const dot   = (a,b) => a.reduce((s,v,i) => s + v*b[i], 0);
+
+  function softmax(arr) {
+    const mx   = Math.max(...arr);
+    const exps = arr.map(v => Math.exp(v - mx));
+    const sum  = exps.reduce((a,b) => a+b, 0);
+    return exps.map(v => v/sum);
+  }
+
+  // Nucleus (top-p) sampling
+  function nucleusSample(probs, p, temp) {
+    const logits = probs.map(v => Math.log(v+1e-10) / temp);
+    const scaled = softmax(logits);
+    const indexed = scaled.map((prob,i) => ({prob,i})).sort((a,b) => b.prob-a.prob);
+    let cumulative = 0;
+    const nucleus = [];
+    for (const item of indexed) {
+      nucleus.push(item);
+      cumulative += item.prob;
+      if (cumulative >= p) break;
+    }
+    const total = nucleus.reduce((s,x) => s+x.prob, 0);
+    let r = Math.random() * total, acc = 0;
+    for (const item of nucleus) {
+      acc += item.prob;
+      if (r <= acc) return item.i;
+    }
+    return nucleus[0].i;
+  }
+
+  function meanEmbed(wordList) {
+    const result = new Array(EMBED_DIM).fill(0);
+    let count = 0;
+    for (const w of wordList) {
+      let idx = wordIndex[w];
+      // Unknown word: add it to vocab with a random embedding so we never get a zero vector
+      if (idx === undefined) idx = wordIndex[addWord(w)];
+      for (let d = 0; d < EMBED_DIM; d++) result[d] += embeddings[idx][d];
+      count++;
+    }
+    if (count > 0) for (let d = 0; d < EMBED_DIM; d++) result[d] /= count;
+    // Safety: if still zero (empty list), return small random vector
+    const mag = result.reduce((s,v) => s + v*v, 0);
+    if (mag < 1e-10) return randArr(EMBED_DIM, -0.1, 0.1);
+    return result;
+  }
+
+  // ── Forward ────────────────────────────────────────────────────────────────
+  function forward(inputVec) {
+    ensureOutputSize();
+    const z1 = W1.map((row,i) => dot(row,inputVec) + b1[i]);
+    const h1  = z1.map(relu);
+    const z2  = W2.map((row,i) => dot(row,h1) + b2[i]);
+    return { h1, probs: softmax(z2) };
+  }
+
+  // ── Training data ──────────────────────────────────────────────────────────
+  // Rich, natural bigram/trigram chains covering many topics
+  const TRAIN_DATA = [
+    // Basic sentence structure
+    {input:["i","think"],            target:"that"},
+    {input:["i","think","that"],     target:"the"},
+    {input:["i","believe"],          target:"that"},
+    {input:["i","want"],             target:"to"},
+    {input:["i","feel"],             target:"like"},
+    {input:["i","know"],             target:"that"},
+    {input:["we","can"],             target:"build"},
+    {input:["we","need"],            target:"to"},
+    {input:["we","should"],          target:"focus"},
+    {input:["it","is"],              target:"important"},
+    {input:["it","was"],             target:"a"},
+    {input:["this","is"],            target:"a"},
+    {input:["this","means"],         target:"that"},
+    {input:["that","is"],            target:"why"},
+    {input:["there","is"],           target:"a"},
+    {input:["there","are"],          target:"many"},
+    {input:["in","the"],             target:"future"},
+    {input:["for","the"],            target:"best"},
+    {input:["of","the"],             target:"world"},
+    {input:["to","the"],             target:"future"},
+    {input:["on","the"],             target:"other"},
+    {input:["at","the"],             target:"same"},
+    // Sentence completions
+    {input:["the","best"],           target:"way"},
+    {input:["best","way"],           target:"to"},
+    {input:["way","to"],             target:"solve"},
+    {input:["to","solve"],           target:"this"},
+    {input:["solve","this"],         target:"problem"},
+    {input:["the","problem"],        target:"is"},
+    {input:["problem","is"],         target:"that"},
+    {input:["the","reason"],         target:"is"},
+    {input:["reason","is"],          target:"that"},
+    {input:["the","goal"],           target:"is"},
+    {input:["goal","is"],            target:"to"},
+    {input:["the","result"],         target:"is"},
+    {input:["result","is"],          target:"a"},
+    {input:["the","answer"],         target:"is"},
+    {input:["answer","is"],          target:"simple"},
+    {input:["the","idea"],           target:"is"},
+    {input:["idea","is"],            target:"to"},
+    // AI / tech chains
+    {input:["machine","learning"],   target:"is"},
+    {input:["learning","is"],        target:"a"},
+    {input:["neural","network"],     target:"can"},
+    {input:["network","can"],        target:"learn"},
+    {input:["can","learn"],          target:"patterns"},
+    {input:["learn","patterns"],     target:"from"},
+    {input:["patterns","from"],      target:"data"},
+    {input:["deep","learning"],      target:"models"},
+    {input:["learning","models"],    target:"are"},
+    {input:["models","are"],         target:"trained"},
+    {input:["are","trained"],        target:"on"},
+    {input:["trained","on"],         target:"large"},
+    {input:["on","large"],           target:"datasets"},
+    {input:["large","datasets"],     target:"of"},
+    {input:["the","model"],          target:"learns"},
+    {input:["model","learns"],       target:"to"},
+    {input:["learns","to"],          target:"predict"},
+    {input:["to","predict"],         target:"the"},
+    {input:["artificial","intelligence"], target:"is"},
+    {input:["intelligence","is"],    target:"changing"},
+    {input:["is","changing"],        target:"the"},
+    {input:["changing","the"],       target:"world"},
+    {input:["language","model"],     target:"can"},
+    {input:["model","can"],          target:"generate"},
+    {input:["can","generate"],       target:"text"},
+    {input:["generate","text"],      target:"that"},
+    {input:["text","that"],          target:"sounds"},
+    {input:["that","sounds"],        target:"natural"},
+    {input:["the","transformer"],    target:"model"},
+    {input:["transformer","model"],  target:"uses"},
+    {input:["model","uses"],         target:"attention"},
+    {input:["uses","attention"],     target:"to"},
+    {input:["attention","to"],       target:"understand"},
+    {input:["the","data"],           target:"is"},
+    {input:["data","is"],            target:"used"},
+    {input:["is","used"],            target:"to"},
+    {input:["used","to"],            target:"train"},
+    {input:["to","train"],           target:"the"},
+    {input:["the","gradient"],       target:"helps"},
+    {input:["gradient","helps"],     target:"the"},
+    {input:["the","loss"],           target:"function"},
+    {input:["loss","function"],      target:"measures"},
+    {input:["function","measures"],  target:"how"},
+    {input:["measures","how"],       target:"well"},
+    {input:["how","well"],           target:"the"},
+    // Nature chains
+    {input:["the","ocean"],          target:"is"},
+    {input:["ocean","is"],           target:"deep"},
+    {input:["is","deep"],            target:"and"},
+    {input:["deep","and"],           target:"vast"},
+    {input:["and","vast"],           target:"and"},
+    {input:["the","sun"],            target:"rises"},
+    {input:["sun","rises"],          target:"in"},
+    {input:["rises","in"],           target:"the"},
+    {input:["the","mountain"],       target:"is"},
+    {input:["mountain","is"],        target:"tall"},
+    {input:["is","tall"],            target:"and"},
+    {input:["tall","and"],           target:"beautiful"},
+    {input:["the","forest"],         target:"is"},
+    {input:["forest","is"],          target:"full"},
+    {input:["is","full"],            target:"of"},
+    {input:["full","of"],            target:"life"},
+    {input:["of","life"],            target:"and"},
+    {input:["the","river"],          target:"flows"},
+    {input:["river","flows"],        target:"through"},
+    {input:["flows","through"],      target:"the"},
+    {input:["the","sky"],            target:"is"},
+    {input:["sky","is"],             target:"clear"},
+    {input:["is","clear"],           target:"and"},
+    {input:["clear","and"],          target:"blue"},
+    {input:["the","earth"],          target:"is"},
+    {input:["earth","is"],           target:"a"},
+    // Human / society
+    {input:["the","mind"],           target:"is"},
+    {input:["mind","is"],            target:"a"},
+    {input:["a","complex"],          target:"system"},
+    {input:["people","want"],        target:"to"},
+    {input:["want","to"],            target:"understand"},
+    {input:["to","understand"],      target:"the"},
+    {input:["the","future"],         target:"is"},
+    {input:["future","is"],          target:"uncertain"},
+    {input:["is","uncertain"],       target:"but"},
+    {input:["uncertain","but"],      target:"exciting"},
+    {input:["but","exciting"],       target:"and"},
+    {input:["can","build"],          target:"a"},
+    {input:["build","a"],            target:"better"},
+    {input:["a","better"],           target:"world"},
+    {input:["better","world"],       target:"for"},
+    {input:["world","for"],          target:"everyone"},
+    {input:["the","team"],           target:"is"},
+    {input:["team","is"],            target:"working"},
+    {input:["is","working"],         target:"on"},
+    {input:["working","on"],         target:"a"},
+    {input:["on","a"],               target:"new"},
+    {input:["a","new"],              target:"solution"},
+    {input:["new","solution"],       target:"to"},
+    // Science chains
+    {input:["the","brain"],          target:"is"},
+    {input:["brain","is"],           target:"a"},
+    {input:["a","remarkable"],       target:"organ"},
+    {input:["science","is"],         target:"the"},
+    {input:["is","the"],             target:"study"},
+    {input:["the","study"],          target:"of"},
+    {input:["study","of"],           target:"how"},
+    {input:["of","how"],             target:"things"},
+    {input:["how","things"],         target:"work"},
+    {input:["things","work"],        target:"in"},
+    {input:["the","universe"],       target:"is"},
+    {input:["universe","is"],        target:"expanding"},
+    {input:["energy","is"],          target:"never"},
+    {input:["is","never"],           target:"lost"},
+    // Software chains
+    {input:["the","code"],           target:"is"},
+    {input:["code","is"],            target:"written"},
+    {input:["is","written"],         target:"in"},
+    {input:["the","server"],         target:"handles"},
+    {input:["server","handles"],     target:"requests"},
+    {input:["handles","requests"],   target:"from"},
+    {input:["the","database"],       target:"stores"},
+    {input:["database","stores"],    target:"all"},
+    {input:["stores","all"],         target:"the"},
+    {input:["the","api"],            target:"returns"},
+    {input:["api","returns"],        target:"a"},
+    {input:["returns","a"],          target:"response"},
+    {input:["the","system"],         target:"is"},
+    {input:["system","is"],          target:"running"},
+    {input:["is","running"],         target:"on"},
+    {input:["running","on"],         target:"the"},
+    {input:["the","bug"],            target:"was"},
+    {input:["bug","was"],            target:"fixed"},
+    {input:["was","fixed"],          target:"and"},
+    // General connectors
+    {input:["and","the"],            target:"results"},
+    {input:["the","results"],        target:"show"},
+    {input:["results","show"],       target:"that"},
+    {input:["show","that"],          target:"the"},
+    {input:["is","important"],       target:"to"},
+    {input:["important","to"],       target:"understand"},
+    {input:["however"],              target:"the"},
+    {input:["therefore"],            target:"it"},
+    {input:["because"],              target:"it"},
+    {input:["although"],             target:"the"},
+    {input:["finally"],              target:"the"},
+    {input:["in","order"],           target:"to"},
+    {input:["order","to"],           target:"achieve"},
+    {input:["to","achieve"],         target:"the"},
+    {input:["achieve","the"],        target:"goal"},
+    {input:["based","on"],           target:"the"},
+    {input:["on","the"],             target:"other"},
+    {input:["other","hand"],         target:"the"},
+    {input:["at","the"],             target:"same"},
+    {input:["same","time"],          target:"the"},
+    {input:["as","a"],               target:"result"},
+    {input:["a","result"],           target:"of"},
+    {input:["result","of"],          target:"the"},
+  ];
+
+  TRAIN_DATA.forEach(s => { addWord(s.target); s.input.forEach(addWord); });
+
+  // ── Train ──────────────────────────────────────────────────────────────────
+  function trainStep({ input, target }) {
+    ensureOutputSize();
+    const targetIdx = wordIndex[target];
+    if (targetIdx === undefined) return;
+
+    const inputVec = meanEmbed(input);
+    const { h1, probs } = forward(inputVec);
+
+    const dz2 = probs.map((p,i) => p - (i===targetIdx ? 1 : 0));
+
+    for (let j = 0; j < V(); j++) {
+      b2[j] -= LR * dz2[j];
+      for (let k = 0; k < HIDDEN; k++) W2[j][k] -= LR * dz2[j] * h1[k];
+    }
+
+    const dh1 = new Array(HIDDEN).fill(0);
+    for (let k = 0; k < HIDDEN; k++) {
+      for (let j = 0; j < V(); j++) dh1[k] += W2[j][k] * dz2[j];
+      dh1[k] *= reluD(h1[k]);
+    }
+
+    for (let i = 0; i < HIDDEN; i++) {
+      b1[i] -= LR * dh1[i];
+      for (let d = 0; d < EMBED_DIM; d++) W1[i][d] -= LR * dh1[i] * inputVec[d];
+    }
+
+    const dInput = new Array(EMBED_DIM).fill(0);
+    for (let i = 0; i < HIDDEN; i++)
+      for (let d = 0; d < EMBED_DIM; d++) dInput[d] += W1[i][d] * dh1[i];
+
+    for (const w of input) {
+      const idx = wordIndex[w];
+      if (idx === undefined) continue;
+      for (let d = 0; d < EMBED_DIM; d++) embeddings[idx][d] -= LR * dInput[d];
+    }
+  }
+
+  function trainAsync() {
+    return new Promise(resolve => {
+      let epoch = 0;
+      function step() {
+        for (let e = 0; e < 10; e++) { TRAIN_DATA.forEach(trainStep); epoch++; }
+        statusText.textContent = `Training… ${epoch}/${EPOCHS} epochs`;
+        epoch < EPOCHS ? requestAnimationFrame(step) : resolve();
+      }
+      requestAnimationFrame(step);
+    });
+  }
+
+  // ── Offline generation ─────────────────────────────────────────────────────
+  function generateOffline(inputWords, n, temp) {
+    let context = inputWords.map(w => {
+      const norm = w.trim().toLowerCase();
+      return norm ? (addWord(norm), norm) : null;
+    }).filter(Boolean);
+
+    if (!context.length) return [];
+    const generated = [];
+
+    for (let step = 0; step < n; step++) {
+      const window  = context.slice(-WINDOW);
+      ensureOutputSize();
+      let probs = forward(meanEmbed(window)).probs;
+
+      // Hard block: zero out any word used in the last 6 context words
+      const recentList = context.slice(-6);
+      const recentSet  = new Set(recentList);
+      // Also block single-letter words and pure stop words from repeating
+      const BORING = new Set(["the","a","an","is","are","was","were","be","been","of","in","on","at","to","it","its","i","he","she","we","they","and","or","but","so","that","this","for","not","no","by","as","do","did","had","have","has"]);
+      probs = probs.map((p, i) => {
+        const w = vocab[i];
+        if (recentSet.has(w)) return 0;           // hard zero for recent words
+        if (BORING.has(w) && generated.length < n - 1) return p * 0.1; // suppress boring filler mid-sequence
+        return p;
+      });
+
+      // Re-normalise
+      const total = probs.reduce((s,v) => s+v, 0);
+      probs = total > 0 ? probs.map(p => p / total) : probs;
+
+      const top5 = vocab.map((w,i) => ({w,p:probs[i]})).sort((a,b)=>b.p-a.p).slice(0,5);
+      log(`  [offline] step ${step+1}: ${top5.map(x=>`${x.w}(${(x.p*100).toFixed(1)}%)`).join("  ")}`);
+
+      const idx    = nucleusSample(probs, 0.95, temp);
+      const chosen = vocab[idx];
+      generated.push(chosen);
+      context.push(chosen);
+    }
+
+    return generated;
+  }
+
+  // ── Online brain — word-by-word via Datamuse left-context ──────────────────
+  // Uses `lc` (left context): predicts the statistically most likely NEXT word
+  // given a real English phrase. Completely different from the neural net.
+  // Clean a word list: lowercase, strip punctuation, drop empty
+  function cleanWords(words) {
+    return words.map(w => w.toLowerCase().replace(/[^a-z']/g, "")).filter(Boolean);
+  }
+
+  async function nextWordOnline(context, recentSet) {
+    // Try last 3 clean words as left-context
+    const clean  = cleanWords(context).slice(-3);
+    const phrase = clean.join(" ");
+
+    const tryFetch = async (url) => {
+      try {
+        const res  = await fetch(url);
+        const data = await res.json();
+        if (!Array.isArray(data) || !data.length) return null;
+        // Filter out words we've used recently
+        const filtered = data.filter(x => !recentSet.has(x.word));
+        const pool = (filtered.length ? filtered : data).slice(0, 4);
+        const totalScore = pool.reduce((s,x) => s + (x.score||1), 0);
+        let r = Math.random() * totalScore, acc = 0;
+        for (const item of pool) {
+          acc += (item.score||1);
+          if (r <= acc) return item.word;
+        }
+        return pool[0].word;
+      } catch(e) { return null; }
+    };
+
+    // Strategy 1: left-context (predicts next word after a phrase)
+    if (phrase) {
+      const w = await tryFetch(`https://api.datamuse.com/words?lc=${encodeURIComponent(phrase)}&max=15`);
+      if (w) return w;
+    }
+
+    // Strategy 2: "words that follow" the last single word
+    const lastWord = clean[clean.length - 1] || "";
+    if (lastWord) {
+      const w = await tryFetch(`https://api.datamuse.com/words?lc=${encodeURIComponent(lastWord)}&max=15`);
+      if (w) return w;
+    }
+
+    // Strategy 3: words meaning similar to the most content-rich word
+    const STOP_ONLINE = new Set(["the","a","an","is","are","was","were","i","it","in","on","at","to","of","and","or","but","how","what","where","when","why","who"]);
+    const contentWord = clean.filter(w => !STOP_ONLINE.has(w)).slice(-1)[0] || lastWord;
+    if (contentWord) {
+      const w = await tryFetch(`https://api.datamuse.com/words?ml=${encodeURIComponent(contentWord)}&max=15`);
+      if (w) return w;
+    }
+
+    return null;
+  }
+
+  async function generateOnline(inputWords, n) {
+    const context    = cleanWords(inputWords);
+    const generated  = [];
+    const recentSet  = new Set(context);
+    for (let i = 0; i < n; i++) {
+      const next = await nextWordOnline(context, recentSet);
+      if (!next) { log(`  [online] step ${i+1}: no result, stopping.`); break; }
+      log(`  [online] step ${i+1}: "${context.slice(-3).join(" ")}" → "${next}"`);
+      generated.push(next);
+      context.push(next);
+      recentSet.add(next);
+    }
+    return generated;
+  }
+
+  // ── Render phrase with coloured input vs generated ─────────────────────────
+  function renderPhrase(el, inputWords, generatedWords) {
+    el.innerHTML =
+      `<span class="input-part">${inputWords.join(" ")}</span> ` +
+      `<span class="gen-part">${generatedWords.join(" ")}</span>`;
+  }
+
+  // ── UI ─────────────────────────────────────────────────────────────────────
+  runBtn.addEventListener("click", async () => {
+    const raw = sentInput.value.trim();
+    if (!raw) return;
+
+    const n         = parseInt(genCount.value, 10);
+    const temp      = parseFloat(tempSelect.value);
+    const inputWords = raw.split(/\s+/).map(w => w.toLowerCase()).filter(Boolean);
+
+    log(`\n${"─".repeat(54)}`);
+    log(`Input: "${inputWords.join(" ")}"  |  words: ${n}  |  temp: ${temp}`);
+
+    runBtn.disabled = true;
+    offlineCard.classList.remove("visible");
+    onlineCard.classList.remove("visible");
+
+    // Run offline first (instant)
+    try {
+      log("\n🧠 Offline brain:");
+      const offWords = generateOffline(inputWords, n, temp);
+      renderPhrase(offlinePhEl, inputWords, offWords);
+      offlineMetaEl.textContent = `Generated by MachineryAI neural net · vocab ${V()} words · temp ${temp}`;
+      offlineCard.classList.add("visible");
+    } catch(e) { log("Offline error: " + e.message); }
+
+    // Run online (async — may take a moment)
+    try {
+      log("\n🌐 Online brain (Datamuse left-context):");
+      const onWords = await generateOnline(inputWords, n);
+      renderPhrase(onlinePhEl, inputWords, onWords);
+      onlineMetaEl.textContent = `Generated word-by-word via live internet API · Datamuse lc`;
+      onlineCard.classList.add("visible");
+    } catch(e) { log("Online error: " + e.message); }
+
+    runBtn.disabled = false;
+  });
+
+  sentInput.addEventListener("keydown", e => {
+    if (e.key === "Enter" && !runBtn.disabled) runBtn.click();
+  });
+
+  // ── Boot ───────────────────────────────────────────────────────────────────
+  (async () => {
+    await trainAsync();
+    statusDot.classList.add("ready");
+    statusText.textContent = `Ready · ${V()} words · ${EPOCHS} epochs trained`;
+    runBtn.textContent     = "▶  Generate";
+    runBtn.disabled        = false;
+    log(`✅ MachineryAI 1.0 ready.`);
+    log(`   Vocab: ${V()} words | Embed: ${EMBED_DIM}d | Hidden: ${HIDDEN} | Window: ${WINDOW}`);
+    log('   Try: "machine learning is", "the ocean", "i think that", "the future"');
+  })();
+
+})();
+</script>
+</body>
+</html>
